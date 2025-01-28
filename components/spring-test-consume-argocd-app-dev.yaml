@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: spring-test-consume-dev
+  namespace: openshift-gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/redhat-mal/developer-charts
+    targetRevision: HEAD
+    path: spring-boot-application
+    helm:
+      values: |
+        system: mikes-system-test
+        component: spring-test-consume
+        environment: dev
+        image:
+          tag: latest
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mikes-system-test-dev
+  syncPolicy:
+    automated: 
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=false
+    - RespectIgnoreDifferences=true
+    - ApplyOutOfSyncOnly=true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 10m
