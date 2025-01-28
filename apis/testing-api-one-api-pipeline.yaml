@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mikes-system-test-testing-api-one-api-pipeline
+  namespace: openshift-gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    system: mikes-system-test
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/redhat-mal/developer-charts
+    targetRevision: HEAD
+    path: api-specification-pipeline
+    helm:
+      values: |
+        domain: redhat-mal
+        system: mikes-system-test
+        component: testing-api-one
+        groupid: com.redhat.mikes-system-test
+        apicurioRegistry: registry-apicurio-registry.apps.cluster-5cr9g.5cr9g.sandbox2422.opentlc.com
+        mockRegistry: microcks-microcks.apps.cluster-5cr9g.5cr9g.sandbox2422.opentlc.com
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mikes-system-test-build
+  syncPolicy:
+    automated: 
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=false
+    - RespectIgnoreDifferences=true
+    - ApplyOutOfSyncOnly=true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 10m
